@@ -8,7 +8,6 @@ OPTIONS = {
     'plist': {
         'LSUIElement': True,
     },
-    'iconfile': 'icon.icns',
     'packages': ['rumps'],
 }
 
