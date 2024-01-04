@@ -1,3 +1,4 @@
+import os
 from setuptools import setup
 
 APP = ['main.py']
@@ -7,6 +8,7 @@ OPTIONS = {
     'plist': {
         'LSUIElement': True,
     },
+    'iconfile': 'icon.icns',
     'packages': ['rumps'],
 }
 
