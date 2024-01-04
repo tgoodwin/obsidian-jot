@@ -16,7 +16,10 @@ class JotStatusBarApp(rumps.App):
         window = rumps.Window(title="Jot", message="Add to a daily note", cancel="Cancel")
         response = window.run()
         res = response.text
-        self.write_text(res)
+
+        # discard empty responses
+        if len(res.strip()) > 0:
+            self.write_text(res)
 
 
     def write_text(self, text):
