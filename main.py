@@ -1,6 +1,8 @@
 import os
 from datetime import datetime
 import rumps
+from quickmachotkey import quickHotKey, mask
+from quickmachotkey.constants import kVK_ANSI_J, cmdKey, optionKey, controlKey, shiftKey
 
 NOTES_DIR = '/Users/tgoodwin/Library/Mobile Documents/iCloud~md~obsidian/Documents/obsidian-vault/daily notes'
 
@@ -29,6 +31,17 @@ class JotStatusBarApp(rumps.App):
         with open(path, 'a') as f:
             f.write('\n' + text + '\n')
 
+
+@quickHotKey(virtualKey=kVK_ANSI_J, modifierMask=mask(cmdKey, optionKey, controlKey))
+def handler():
+    app.sayhi(None)
+
 if __name__ == '__main__':
-    JotStatusBarApp("Jot").run()
+    app = JotStatusBarApp("Jot")
+    app.run()
+
+    from AppKit import NSApplication
+    from PyObjCTools import AppHelper
+    NSApplication.sharedApplication()
+    AppHelper.runEventLoop()
 
