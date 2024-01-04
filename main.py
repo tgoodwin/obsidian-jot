@@ -13,7 +13,7 @@ class JotStatusBarApp(rumps.App):
 
     @rumps.clicked("Add to daily note")
     def sayhi(self, _):
-        window = rumps.Window(title="Jot", message="Add to a daily note")
+        window = rumps.Window(title="Jot", message="Add to a daily note", cancel="Cancel")
         response = window.run()
         res = response.text
         self.write_text(res)
