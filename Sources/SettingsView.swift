@@ -22,6 +22,7 @@ struct SettingsView: View {
                 }
                 TextField("Daily-note subdirectory (optional)", text: $appState.dailyNoteSubdirectory)
                 TextField("Filename format", text: $appState.dailyNoteFormat)
+                TextField("Template path (optional)", text: $appState.dailyNoteTemplate)
                 HStack {
                     Spacer()
                     Button("Detect from Obsidian") {
@@ -83,6 +84,9 @@ struct SettingsView: View {
         }
         if let format = config.format, !format.isEmpty {
             appState.dailyNoteFormat = ObsidianConfig.convertMomentFormat(format)
+        }
+        if let template = config.template, !template.isEmpty {
+            appState.dailyNoteTemplate = template
         }
     }
 }

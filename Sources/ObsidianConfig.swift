@@ -3,6 +3,7 @@ import Foundation
 struct ObsidianDailyNotesConfig: Decodable {
     let folder: String?
     let format: String?
+    let template: String?
 }
 
 enum ObsidianConfig {

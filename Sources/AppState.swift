@@ -6,6 +6,7 @@ final class AppState: ObservableObject {
     @AppStorage("vaultPath") var vaultPath: String = ""
     @AppStorage("dailyNoteFormat") var dailyNoteFormat: String = "yyyy-MM-dd"
     @AppStorage("dailyNoteSubdirectory") var dailyNoteSubdirectory: String = ""
+    @AppStorage("dailyNoteTemplate") var dailyNoteTemplate: String = ""
 
     var isConfigured: Bool {
         !vaultPath.isEmpty && FileManager.default.fileExists(atPath: vaultPath)

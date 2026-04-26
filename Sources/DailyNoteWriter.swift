@@ -19,6 +19,10 @@ enum DailyNoteWriterError: Error, LocalizedError {
 
 struct DailyNoteWriter {
     let fileURL: URL
+    /// Used to populate the file with template content the first time it
+    /// is written, so jots don't bypass the user's Obsidian daily-note template.
+    var template: DailyNoteTemplate?
+    var dateFormat: String = "yyyy-MM-dd"
 
     func append(_ text: String) throws {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -39,10 +43,17 @@ struct DailyNoteWriter {
                 try handle.seekToEnd()
                 try handle.write(contentsOf: data)
             } else {
-                try data.write(to: fileURL, options: .atomic)
+                let initial = renderedTemplate() ?? ""
+                let combined = initial + payload
+                try (combined.data(using: .utf8) ?? Data()).write(to: fileURL, options: .atomic)
             }
         } catch {
             throw DailyNoteWriterError.writeFailed(error)
         }
+    }
+
+    private func renderedTemplate() -> String? {
+        guard let template else { return nil }
+        return template.render(forDate: Date(), defaultDateFormat: dateFormat)
     }
 }

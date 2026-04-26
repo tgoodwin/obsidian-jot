@@ -66,8 +66,17 @@ struct JotPanelView: View {
             errorMessage = "Vault not configured. Open Settings."
             return
         }
+        let template = appState.dailyNoteTemplate.isEmpty ? nil : DailyNoteTemplate(
+            vaultPath: appState.vaultPath,
+            templatePath: appState.dailyNoteTemplate
+        )
+        let writer = DailyNoteWriter(
+            fileURL: url,
+            template: template,
+            dateFormat: appState.dailyNoteFormat
+        )
         do {
-            try DailyNoteWriter(fileURL: url).append(text)
+            try writer.append(text)
             text = ""
             errorMessage = nil
             onClose()
