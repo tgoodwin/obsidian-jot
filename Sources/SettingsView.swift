@@ -4,6 +4,7 @@ import KeyboardShortcuts
 
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
+    @StateObject private var loginItem = LoginItem()
 
     var body: some View {
         Form {
@@ -40,7 +41,23 @@ struct SettingsView: View {
             Section("Hotkey") {
                 KeyboardShortcuts.Recorder("Toggle jot panel:", name: .toggleJotPanel)
             }
+
+            Section("Startup") {
+                Toggle(
+                    "Launch at login",
+                    isOn: Binding(
+                        get: { loginItem.isEnabled },
+                        set: { loginItem.setEnabled($0) }
+                    )
+                )
+                if loginItem.requiresApproval {
+                    Text("Login item needs approval in System Settings → General → Login Items.")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+            }
         }
+        .onAppear { loginItem.refresh() }
         .formStyle(.grouped)
         .padding(20)
         .frame(width: 480, height: 320)
