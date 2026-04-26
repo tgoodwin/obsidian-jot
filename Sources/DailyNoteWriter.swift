@@ -23,6 +23,9 @@ struct DailyNoteWriter {
     /// is written, so jots don't bypass the user's Obsidian daily-note template.
     var template: DailyNoteTemplate?
     var dateFormat: String = "yyyy-MM-dd"
+    /// Heading text the jot is appended into. Empty string means "append at EOF".
+    var sectionHeading: String = "Jots"
+    var sectionLevel: Int = 2
 
     func append(_ text: String) throws {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -33,20 +36,27 @@ struct DailyNoteWriter {
             throw DailyNoteWriterError.directoryMissing(directory)
         }
 
-        let payload = "\n\(trimmed)\n"
-        guard let data = payload.data(using: .utf8) else { return }
+        let existing: String
+        if FileManager.default.fileExists(atPath: fileURL.path) {
+            existing = (try? String(contentsOf: fileURL, encoding: .utf8)) ?? ""
+        } else {
+            existing = renderedTemplate() ?? ""
+        }
+
+        let updated: String
+        if !sectionHeading.isEmpty {
+            updated = DailyNoteSection.insert(
+                into: existing,
+                heading: sectionHeading,
+                level: sectionLevel,
+                text: trimmed
+            )
+        } else {
+            updated = existing + "\n\(trimmed)\n"
+        }
 
         do {
-            if FileManager.default.fileExists(atPath: fileURL.path) {
-                let handle = try FileHandle(forWritingTo: fileURL)
-                defer { try? handle.close() }
-                try handle.seekToEnd()
-                try handle.write(contentsOf: data)
-            } else {
-                let initial = renderedTemplate() ?? ""
-                let combined = initial + payload
-                try (combined.data(using: .utf8) ?? Data()).write(to: fileURL, options: .atomic)
-            }
+            try (updated.data(using: .utf8) ?? Data()).write(to: fileURL, options: .atomic)
         } catch {
             throw DailyNoteWriterError.writeFailed(error)
         }

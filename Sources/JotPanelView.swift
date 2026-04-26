@@ -73,7 +73,9 @@ struct JotPanelView: View {
         let writer = DailyNoteWriter(
             fileURL: url,
             template: template,
-            dateFormat: appState.dailyNoteFormat
+            dateFormat: appState.dailyNoteFormat,
+            sectionHeading: appState.jotsHeading,
+            sectionLevel: appState.jotsHeadingLevel
         )
         do {
             try writer.append(text)

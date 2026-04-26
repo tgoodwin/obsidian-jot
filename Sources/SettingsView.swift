@@ -39,6 +39,18 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Section") {
+                TextField("Heading text (empty = append at end of file)", text: $appState.jotsHeading)
+                Stepper(value: $appState.jotsHeadingLevel, in: 1...6) {
+                    Text("Heading level: H\(appState.jotsHeadingLevel)")
+                }
+                if !appState.jotsHeading.isEmpty {
+                    Text("Jots will land under \(String(repeating: "#", count: appState.jotsHeadingLevel)) \(appState.jotsHeading)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section("Hotkey") {
                 KeyboardShortcuts.Recorder("Toggle jot panel:", name: .toggleJotPanel)
             }
@@ -61,7 +73,7 @@ struct SettingsView: View {
         .onAppear { loginItem.refresh() }
         .formStyle(.grouped)
         .padding(20)
-        .frame(width: 480, height: 320)
+        .frame(width: 480, height: 460)
     }
 
     private func pickVault() {
