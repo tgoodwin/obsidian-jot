@@ -1,14 +1,11 @@
-# Obsidian Jot (native)
+# Obsidian Jot
 
-Menu-bar app for macOS. Press a global hotkey, type something, hit Enter — it gets appended to today's Obsidian daily note.
-
-Native SwiftUI rewrite of `../obsidian-jot/main.py` (rumps-based prototype).
+Menu-bar app for macOS. Press a global hotkey (default ⌃⇧J), type something, hit Enter — it gets appended to today's Obsidian daily note.
 
 ## Build
 
 ```bash
 brew install xcodegen
-cd obsidian-jot-mac
 xcodegen
 open ObsidianJot.xcodeproj
 ```
@@ -34,7 +31,8 @@ The hotkey, `NSPanel` activation behavior, and `MenuBarExtra` only exist in a re
 - `Sources/SettingsView.swift` — vault picker + `KeyboardShortcuts.Recorder`.
 - `Sources/AppState.swift` — `@AppStorage`-backed settings, computes today's daily-note URL.
 - `Sources/DailyNoteWriter.swift` — appends text to the file (creating it if needed).
-- `Sources/KeyboardShortcutsNames.swift` — shortcut name registration. Default: ⌘⇧J.
+- `Sources/ObsidianConfig.swift` — reads `<vault>/.obsidian/daily-notes.json` so the subdirectory and filename format are auto-detected from the user's Obsidian setup.
+- `Sources/KeyboardShortcutsNames.swift` — shortcut name registration. Default: ⌃⇧J.
 
 ## Notes
 
