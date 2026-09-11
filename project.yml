@@ -12,6 +12,9 @@ packages:
   MarkdownUI:
     url: https://github.com/gonzalezreal/swift-markdown-ui
     from: "2.4.1"
+  Highlighter:
+    url: https://github.com/smittytone/HighlighterSwift
+    from: "3.1.0"
 
 targets:
   ObsidianJot:
@@ -26,6 +29,7 @@ targets:
     dependencies:
       - package: KeyboardShortcuts
       - package: MarkdownUI
+      - package: Highlighter
     info:
       path: Resources/Info.plist
       properties:

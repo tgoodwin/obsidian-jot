@@ -16,7 +16,9 @@ Then ⌘R in Xcode. On first launch the Settings window opens — pick your vaul
 
 Quick Chat uses your local Codex installation and saved ChatGPT login by default. It keeps one `codex app-server` process alive, so later questions avoid CLI startup cost. Run `codex login` in Terminal once if needed. An OpenAI-compatible HTTP backend is also available in Settings; its API key is stored in macOS Keychain.
 
-Open the jot panel and press Tab. The panel expands into chat mode; press Tab again to switch back. Responses render GitHub-flavored Markdown, including headings, links, lists, blockquotes, fenced code, and tables. Assistant responses can also be copied or appended to today's note. Conversation threads are ephemeral and cleared when the panel closes.
+Open the jot panel and press Tab to switch its compact input into chat mode. The panel expands when the first response arrives; press Tab again to switch back. Responses render GitHub-flavored Markdown, including headings, links, lists, blockquotes, syntax-highlighted fenced code, and tables. Assistant responses can also be copied or appended to today's note.
+
+The global hotkey and focus loss hide the panel while preserving its contents. Press Escape to dismiss the panel and clear the current jot or chat session.
 
 ## Dev loop
 

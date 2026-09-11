@@ -5,15 +5,21 @@ import SwiftUI
 final class JotPanelController: NSObject, NSWindowDelegate {
     private var panel: NSPanel?
     private let appState: AppState
-    private let session = PanelSession()
+    private let session: PanelSession
 
     init(appState: AppState) {
         self.appState = appState
+        self.session = PanelSession()
+    }
+
+    init(appState: AppState, session: PanelSession) {
+        self.appState = appState
+        self.session = session
     }
 
     func toggle() {
         if let panel, panel.isVisible {
-            close()
+            dismiss()
         } else {
             present()
         }
@@ -30,20 +36,25 @@ final class JotPanelController: NSObject, NSWindowDelegate {
         panel.makeKeyAndOrderFront(nil)
     }
 
-    func close() {
+    func dismiss() {
+        panel?.orderOut(nil)
+    }
+
+    func discardAndDismiss() {
         panel?.orderOut(nil)
         session.reset()
     }
 
     func windowDidResignKey(_ notification: Notification) {
-        // Auto-dismiss when focus is lost — Day-One-style.
-        close()
+        // Losing focus hides the panel without discarding the current session.
+        dismiss()
     }
 
     private func makePanel() -> NSPanel {
         let contentView = JotPanelView(
             session: session,
-            onClose: { [weak self] in self?.close() },
+            onDismiss: { [weak self] in self?.dismiss() },
+            onDiscard: { [weak self] in self?.discardAndDismiss() },
             onPreferredHeightChange: { [weak self] height in
                 DispatchQueue.main.async {
                     self?.resizePanel(to: height)

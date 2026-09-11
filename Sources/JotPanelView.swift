@@ -6,14 +6,15 @@ struct JotPanelView: View {
     @EnvironmentObject var appState: AppState
     @ObservedObject var session: PanelSession
 
-    let onClose: () -> Void
+    let onDismiss: () -> Void
+    let onDiscard: () -> Void
     let onPreferredHeightChange: (CGFloat) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
             header
 
-            if session.mode == .chat {
+            if session.mode == .chat, hasChatResponse {
                 chatTranscript
                 Divider().opacity(0.5)
             }
@@ -21,7 +22,7 @@ struct JotPanelView: View {
             JotTextEditor(
                 text: $session.input,
                 onSubmit: submit,
-                onCancel: onClose,
+                onCancel: onDiscard,
                 onToggleMode: session.toggleMode
             )
             .frame(
@@ -45,7 +46,7 @@ struct JotPanelView: View {
             minWidth: 420,
             idealWidth: 520,
             maxWidth: .infinity,
-            minHeight: session.mode == .chat ? 320 : 150,
+            minHeight: 150,
             idealHeight: preferredHeight,
             maxHeight: .infinity
         )
@@ -59,6 +60,9 @@ struct JotPanelView: View {
         .onChange(of: session.mode) { _, _ in
             onPreferredHeightChange(preferredHeight)
         }
+        .onChange(of: hasChatResponse) { _, _ in
+            onPreferredHeightChange(preferredHeight)
+        }
     }
 
     private var header: some View {
@@ -70,6 +74,10 @@ struct JotPanelView: View {
                 .foregroundStyle(.secondary)
             Spacer()
             if session.mode == .chat {
+                if session.isSending {
+                    ProgressView()
+                        .controlSize(.mini)
+                }
                 Text(chatModelLabel)
                     .font(.system(size: 10))
                     .foregroundStyle(.tertiary)
@@ -147,7 +155,11 @@ struct JotPanelView: View {
     }
 
     private var preferredHeight: CGFloat {
-        session.mode == .chat ? 500 : 180
+        session.mode == .chat && hasChatResponse ? 500 : 180
+    }
+
+    private var hasChatResponse: Bool {
+        session.messages.contains { $0.role == .assistant }
     }
 
     private var chatModelLabel: String {
@@ -172,11 +184,16 @@ struct JotPanelView: View {
     }
 
     private func submit() {
-        session.submit(appState: appState, onJotSaved: onClose)
+        session.submit(appState: appState, onJotSaved: onDismiss)
     }
 }
 
 private struct ChatMessageView: View {
+    private static let lightHighlighter = HighlightJSCodeSyntaxHighlighter(themeName: "github")
+    private static let darkHighlighter = HighlightJSCodeSyntaxHighlighter(themeName: "github-dark")
+
+    @Environment(\.colorScheme) private var colorScheme
+
     let message: ChatMessage
     let wasSaved: Bool
     let onSave: () -> Void
@@ -188,6 +205,9 @@ private struct ChatMessageView: View {
             VStack(alignment: .leading, spacing: 7) {
                 Markdown(message.content)
                     .markdownTheme(.jot)
+                    .markdownCodeSyntaxHighlighter(
+                        colorScheme == .dark ? Self.darkHighlighter : Self.lightHighlighter
+                    )
                     .font(.system(size: 13))
                     .textSelection(.enabled)
 
@@ -266,7 +286,8 @@ private struct VisualEffectBackground: NSViewRepresentable {
 #Preview {
     JotPanelView(
         session: PanelSession(),
-        onClose: {},
+        onDismiss: {},
+        onDiscard: {},
         onPreferredHeightChange: { _ in }
     )
     .environmentObject(AppState())
