@@ -27,7 +27,7 @@ struct JotTextEditor: NSViewRepresentable {
         textView.drawsBackground = false
         textView.font = .systemFont(ofSize: 14)
         textView.placeholder = placeholder
-        textView.textContainerInset = NSSize(width: 6, height: 8)
+        textView.textContainerInset = NSSize(width: 0, height: 8)
         textView.isAutomaticQuoteSubstitutionEnabled = false
         textView.isAutomaticDashSubstitutionEnabled = false
         textView.isAutomaticTextReplacementEnabled = false
@@ -98,10 +98,14 @@ final class SubmittingTextView: NSTextView {
         guard string.isEmpty, !placeholder.isEmpty else { return }
         let attributes: [NSAttributedString.Key: Any] = [
             .font: font ?? NSFont.systemFont(ofSize: 14),
-            .foregroundColor: NSColor.placeholderTextColor
+            .foregroundColor: NSColor.tertiaryLabelColor
         ]
+        let lineFragmentPadding = textContainer?.lineFragmentPadding ?? 0
         (placeholder as NSString).draw(
-            at: NSPoint(x: textContainerInset.width, y: textContainerInset.height),
+            at: NSPoint(
+                x: textContainerInset.width + lineFragmentPadding,
+                y: textContainerInset.height
+            ),
             withAttributes: attributes
         )
     }

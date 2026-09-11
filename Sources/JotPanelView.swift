@@ -30,7 +30,11 @@ struct JotPanelView: View {
                 minHeight: session.mode == .chat ? chatInputHeight : 100,
                 maxHeight: session.mode == .chat ? chatInputHeight : .infinity
             )
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 9)
+
+            if session.mode == .chat, !hasChatActivity {
+                Spacer(minLength: 0)
+            }
 
             if let errorMessage = session.errorMessage {
                 Text(errorMessage)
@@ -47,7 +51,7 @@ struct JotPanelView: View {
             minWidth: 420,
             idealWidth: 520,
             maxWidth: .infinity,
-            minHeight: session.mode == .chat ? 100 : 150,
+            minHeight: 150,
             idealHeight: preferredHeight,
             maxHeight: .infinity
         )
@@ -121,7 +125,7 @@ struct JotPanelView: View {
 
     private var preferredHeight: CGFloat {
         guard session.mode == .chat else { return 180 }
-        return hasChatActivity ? 500 : 100 + max(0, chatInputHeight - 34)
+        return hasChatActivity ? 500 : 150 + max(0, chatInputHeight - 34)
     }
 
     private var hasChatActivity: Bool {
