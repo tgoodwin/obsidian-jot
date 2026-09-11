@@ -1,6 +1,6 @@
 # Obsidian Jot
 
-Menu-bar app for macOS. Press a global hotkey (default ⌃⇧J), type something, hit Enter — it gets appended to today's Obsidian daily note. Type `/chat` to turn the same panel into a lightweight LLM conversation.
+Menu-bar app for macOS. Press a global hotkey (default ⌃⇧J), type something, hit Enter — it gets appended to today's Obsidian daily note. Press Tab to turn the same panel into a lightweight LLM conversation.
 
 ## Build
 
@@ -16,7 +16,7 @@ Then ⌘R in Xcode. On first launch the Settings window opens — pick your vaul
 
 Quick Chat uses your local Codex installation and saved ChatGPT login by default. It keeps one `codex app-server` process alive, so later questions avoid CLI startup cost. Run `codex login` in Terminal once if needed. An OpenAI-compatible HTTP backend is also available in Settings; its API key is stored in macOS Keychain.
 
-Open the jot panel, type `/chat`, and press Enter. The panel expands into chat mode. Use `/jot` to switch back. Assistant responses can be copied or appended to today's note. Conversation threads are ephemeral and cleared when the panel closes.
+Open the jot panel and press Tab. The panel expands into chat mode; press Tab again to switch back. Assistant responses can be copied or appended to today's note. Conversation threads are ephemeral and cleared when the panel closes.
 
 ## Dev loop
 

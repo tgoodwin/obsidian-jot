@@ -27,24 +27,6 @@ final class PanelSession: ObservableObject {
         let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
-        if mode == .jot, trimmed == "/chat" || trimmed.hasPrefix("/chat ") {
-            mode = .chat
-            errorMessage = nil
-            input = String(trimmed.dropFirst("/chat".count))
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            if !input.isEmpty {
-                send(appState: appState)
-            }
-            return
-        }
-
-        if mode == .chat, trimmed == "/jot" {
-            mode = .jot
-            input = ""
-            errorMessage = nil
-            return
-        }
-
         switch mode {
         case .jot:
             if appendToDailyNote(trimmed, appState: appState) {
@@ -54,6 +36,11 @@ final class PanelSession: ObservableObject {
         case .chat:
             send(appState: appState)
         }
+    }
+
+    func toggleMode() {
+        mode = mode == .jot ? .chat : .jot
+        errorMessage = nil
     }
 
     func saveToDailyNote(_ message: ChatMessage, appState: AppState) {

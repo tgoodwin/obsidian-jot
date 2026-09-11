@@ -87,7 +87,7 @@ struct SettingsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                Text("Type /chat in the jot panel to begin.")
+                Text("Press Tab in the jot panel to switch between jot and chat modes.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

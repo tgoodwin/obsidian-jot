@@ -5,6 +5,7 @@ struct JotTextEditor: NSViewRepresentable {
     @Binding var text: String
     let onSubmit: () -> Void
     let onCancel: () -> Void
+    let onToggleMode: () -> Void
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -30,6 +31,7 @@ struct JotTextEditor: NSViewRepresentable {
         textView.isAutomaticSpellingCorrectionEnabled = false
         textView.onSubmit = onSubmit
         textView.onCancel = onCancel
+        textView.onToggleMode = onToggleMode
 
         textView.translatesAutoresizingMaskIntoConstraints = true
         textView.autoresizingMask = [.width]
@@ -50,6 +52,7 @@ struct JotTextEditor: NSViewRepresentable {
         }
         textView.onSubmit = onSubmit
         textView.onCancel = onCancel
+        textView.onToggleMode = onToggleMode
 
         DispatchQueue.main.async {
             if textView.window?.firstResponder !== textView {
@@ -76,8 +79,14 @@ struct JotTextEditor: NSViewRepresentable {
 final class SubmittingTextView: NSTextView {
     var onSubmit: (() -> Void)?
     var onCancel: (() -> Void)?
+    var onToggleMode: (() -> Void)?
 
     override func keyDown(with event: NSEvent) {
+        // Tab toggles between jot and chat modes.
+        if event.keyCode == 48 {
+            onToggleMode?()
+            return
+        }
         // Return / Enter without Shift → submit. Shift+Return inserts a newline.
         if event.keyCode == 36 || event.keyCode == 76 {
             if !event.modifierFlags.contains(.shift) {

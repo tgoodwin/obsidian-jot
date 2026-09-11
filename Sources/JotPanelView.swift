@@ -20,7 +20,8 @@ struct JotPanelView: View {
             JotTextEditor(
                 text: $session.input,
                 onSubmit: submit,
-                onCancel: onClose
+                onCancel: onClose,
+                onToggleMode: session.toggleMode
             )
             .frame(minHeight: session.mode == .chat ? 72 : 100, maxHeight: session.mode == .chat ? 100 : 220)
             .padding(.horizontal, 10)
@@ -41,7 +42,7 @@ struct JotPanelView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(modeColor.opacity(session.mode == .chat ? 0.35 : 0.08), lineWidth: 1)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 1)
         )
         .onAppear { onPreferredHeightChange(preferredHeight) }
         .onChange(of: session.mode) { _, _ in
@@ -51,11 +52,11 @@ struct JotPanelView: View {
 
     private var header: some View {
         HStack {
-            Image(systemName: session.mode == .chat ? "sparkles" : "square.and.pencil")
-                .foregroundStyle(modeColor)
+            Image(systemName: session.mode == .chat ? "bubble.left" : "square.and.pencil")
+                .foregroundStyle(.secondary)
             Text(headerText)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(session.mode == .chat ? modeColor : .secondary)
+                .foregroundStyle(.secondary)
             Spacer()
             if session.mode == .chat {
                 Text(chatModelLabel)
@@ -129,11 +130,6 @@ struct JotPanelView: View {
                 .font(.system(size: 10))
                 .foregroundStyle(.tertiary)
             Spacer()
-            if session.mode == .chat {
-                Text("/jot to switch back")
-                    .font(.system(size: 10))
-                    .foregroundStyle(.tertiary)
-            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
@@ -141,10 +137,6 @@ struct JotPanelView: View {
 
     private var preferredHeight: CGFloat {
         session.mode == .chat ? 500 : 180
-    }
-
-    private var modeColor: Color {
-        session.mode == .chat ? .purple : .secondary
     }
 
     private var chatModelLabel: String {
@@ -164,8 +156,8 @@ struct JotPanelView: View {
 
     private var footerText: String {
         session.mode == .chat
-            ? "⏎ to send · ⇧⏎ for newline · esc to dismiss"
-            : "⏎ to save · ⇧⏎ for newline · /chat to chat · esc to dismiss"
+            ? "⏎ to send · ⇧⏎ for newline · tab to jot · esc to dismiss"
+            : "⏎ to save · ⇧⏎ for newline · tab to chat · esc to dismiss"
     }
 
     private func submit() {
@@ -208,7 +200,7 @@ private struct ChatMessageView: View {
             .padding(.vertical, 9)
             .background(
                 message.role == .user
-                    ? Color.purple.opacity(0.16)
+                    ? Color.primary.opacity(0.12)
                     : Color.primary.opacity(0.07)
             )
             .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
