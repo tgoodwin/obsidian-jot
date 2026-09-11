@@ -216,19 +216,24 @@ private struct ChatMessageView: View {
                     .textSelection(.enabled)
 
                 if message.role == .assistant {
-                    HStack(spacing: 10) {
+                    HStack(spacing: 12) {
                         Button {
                             NSPasteboard.general.clearContents()
                             NSPasteboard.general.setString(message.content, forType: .string)
                         } label: {
-                            Label("Copy", systemImage: "doc.on.doc")
+                            Image(systemName: "doc.on.doc")
                         }
+                        .help("Copy response")
+                        .accessibilityLabel("Copy response")
+
                         Button(action: onSave) {
-                            Label(wasSaved ? "Saved" : "Save to note", systemImage: wasSaved ? "checkmark" : "square.and.arrow.down")
+                            Image(systemName: wasSaved ? "checkmark" : "square.and.arrow.down")
                         }
+                        .help(wasSaved ? "Saved to daily note" : "Save to daily note")
+                        .accessibilityLabel(wasSaved ? "Saved to daily note" : "Save to daily note")
                     }
                     .buttonStyle(.plain)
-                    .font(.system(size: 10))
+                    .font(.system(size: 11))
                     .foregroundStyle(.secondary)
                 }
             }
