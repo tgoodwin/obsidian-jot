@@ -5,6 +5,7 @@ import SwiftUI
 final class JotPanelController: NSObject, NSWindowDelegate {
     private var panel: NSPanel?
     private let appState: AppState
+    private let session = PanelSession()
 
     init(appState: AppState) {
         self.appState = appState
@@ -31,6 +32,7 @@ final class JotPanelController: NSObject, NSWindowDelegate {
 
     func close() {
         panel?.orderOut(nil)
+        session.reset()
     }
 
     func windowDidResignKey(_ notification: Notification) {
@@ -39,8 +41,14 @@ final class JotPanelController: NSObject, NSWindowDelegate {
     }
 
     private func makePanel() -> NSPanel {
-        let contentView = JotPanelView(onClose: { [weak self] in self?.close() })
-            .environmentObject(appState)
+        let contentView = JotPanelView(
+            session: session,
+            onClose: { [weak self] in self?.close() },
+            onPreferredHeightChange: { [weak self] height in
+                self?.resizePanel(to: height)
+            }
+        )
+        .environmentObject(appState)
 
         let hosting = NSHostingController(rootView: contentView)
         let size = hosting.view.fittingSize == .zero
@@ -68,6 +76,13 @@ final class JotPanelController: NSObject, NSWindowDelegate {
         panel.contentViewController = hosting
         panel.delegate = self
         return panel
+    }
+
+    private func resizePanel(to height: CGFloat) {
+        guard let panel, abs(panel.contentLayoutRect.height - height) > 1 else { return }
+        let top = panel.frame.maxY
+        panel.setContentSize(NSSize(width: 520, height: height))
+        panel.setFrameOrigin(NSPoint(x: panel.frame.minX, y: top - panel.frame.height))
     }
 
     private func centerOnActiveScreen(_ panel: NSPanel) {
