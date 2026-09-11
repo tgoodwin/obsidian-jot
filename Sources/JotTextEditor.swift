@@ -3,7 +3,6 @@ import AppKit
 
 struct JotTextEditor: NSViewRepresentable {
     @Binding var text: String
-    let placeholder: String
     let onSubmit: () -> Void
     let onCancel: () -> Void
     let onToggleMode: () -> Void
@@ -26,7 +25,6 @@ struct JotTextEditor: NSViewRepresentable {
         textView.allowsUndo = true
         textView.drawsBackground = false
         textView.font = .systemFont(ofSize: 14)
-        textView.placeholder = placeholder
         textView.textContainerInset = NSSize(width: 0, height: 8)
         textView.isAutomaticQuoteSubstitutionEnabled = false
         textView.isAutomaticDashSubstitutionEnabled = false
@@ -54,7 +52,6 @@ struct JotTextEditor: NSViewRepresentable {
         if textView.string != text {
             textView.string = text
         }
-        textView.placeholder = placeholder
         textView.onSubmit = onSubmit
         textView.onCancel = onCancel
         textView.onToggleMode = onToggleMode
@@ -85,30 +82,10 @@ struct JotTextEditor: NSViewRepresentable {
 }
 
 final class SubmittingTextView: NSTextView {
-    var placeholder = "" {
-        didSet { needsDisplay = true }
-    }
     var onSubmit: (() -> Void)?
     var onCancel: (() -> Void)?
     var onToggleMode: (() -> Void)?
     var onContentHeightChange: ((CGFloat) -> Void)?
-
-    override func draw(_ dirtyRect: NSRect) {
-        super.draw(dirtyRect)
-        guard string.isEmpty, !placeholder.isEmpty else { return }
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: font ?? NSFont.systemFont(ofSize: 14),
-            .foregroundColor: NSColor.tertiaryLabelColor
-        ]
-        let lineFragmentPadding = textContainer?.lineFragmentPadding ?? 0
-        (placeholder as NSString).draw(
-            at: NSPoint(
-                x: textContainerInset.width + lineFragmentPadding,
-                y: textContainerInset.height
-            ),
-            withAttributes: attributes
-        )
-    }
 
     override func setFrameSize(_ newSize: NSSize) {
         let widthChanged = abs(frame.width - newSize.width) > 0.5
