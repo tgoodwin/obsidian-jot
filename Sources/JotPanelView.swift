@@ -28,12 +28,12 @@ struct JotPanelView: View {
                 onContentHeightChange: updateInputHeight
             )
             .frame(
-                minHeight: session.mode == .chat ? chatInputHeight : 100,
-                maxHeight: session.mode == .chat ? chatInputHeight : .infinity
+                minHeight: inputHeight,
+                maxHeight: inputHeight
             )
             .padding(.horizontal, 9)
 
-            if session.mode == .chat, !hasChatActivity {
+            if session.mode == .jot || !hasChatActivity {
                 Spacer(minLength: 0)
             }
 
@@ -70,7 +70,7 @@ struct JotPanelView: View {
             onPreferredHeightChange(preferredHeight)
         }
         .onChange(of: measuredInputHeight) { _, _ in
-            if session.mode == .chat, !hasChatActivity {
+            if session.mode == .jot || !hasChatActivity {
                 onPreferredHeightChange(preferredHeight)
             }
         }
@@ -145,15 +145,17 @@ struct JotPanelView: View {
     }
 
     private var preferredHeight: CGFloat {
-        guard session.mode == .chat else { return 180 }
-        return hasChatActivity ? 500 : 180 + max(0, chatInputHeight - 34)
+        if session.mode == .chat, hasChatActivity {
+            return 500
+        }
+        return 180 + max(0, inputHeight - 34)
     }
 
     private var hasChatActivity: Bool {
         !session.messages.isEmpty
     }
 
-    private var chatInputHeight: CGFloat {
+    private var inputHeight: CGFloat {
         min(max(measuredInputHeight, 34), 140)
     }
 
