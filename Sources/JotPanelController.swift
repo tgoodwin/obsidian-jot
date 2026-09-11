@@ -45,7 +45,9 @@ final class JotPanelController: NSObject, NSWindowDelegate {
             session: session,
             onClose: { [weak self] in self?.close() },
             onPreferredHeightChange: { [weak self] height in
-                self?.resizePanel(to: height)
+                DispatchQueue.main.async {
+                    self?.resizePanel(to: height)
+                }
             }
         )
         .environmentObject(appState)
@@ -57,7 +59,7 @@ final class JotPanelController: NSObject, NSWindowDelegate {
 
         let panel = FloatingPanel(
             contentRect: NSRect(origin: .zero, size: size),
-            styleMask: [.nonactivatingPanel, .titled, .fullSizeContentView],
+            styleMask: [.nonactivatingPanel, .titled, .fullSizeContentView, .resizable],
             backing: .buffered,
             defer: false
         )
@@ -70,6 +72,8 @@ final class JotPanelController: NSObject, NSWindowDelegate {
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = true
+        panel.minSize = NSSize(width: 420, height: 150)
+        panel.maxSize = NSSize(width: 1_000, height: 900)
         panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient]
         panel.hidesOnDeactivate = false
@@ -81,7 +85,7 @@ final class JotPanelController: NSObject, NSWindowDelegate {
     private func resizePanel(to height: CGFloat) {
         guard let panel, abs(panel.contentLayoutRect.height - height) > 1 else { return }
         let top = panel.frame.maxY
-        panel.setContentSize(NSSize(width: 520, height: height))
+        panel.setContentSize(NSSize(width: panel.contentLayoutRect.width, height: height))
         panel.setFrameOrigin(NSPoint(x: panel.frame.minX, y: top - panel.frame.height))
     }
 

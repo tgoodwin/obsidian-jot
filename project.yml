@@ -9,6 +9,9 @@ packages:
   KeyboardShortcuts:
     url: https://github.com/sindresorhus/KeyboardShortcuts
     from: "2.2.0"
+  MarkdownUI:
+    url: https://github.com/gonzalezreal/swift-markdown-ui
+    from: "2.4.1"
 
 targets:
   ObsidianJot:
@@ -22,6 +25,7 @@ targets:
           - Info.plist
     dependencies:
       - package: KeyboardShortcuts
+      - package: MarkdownUI
     info:
       path: Resources/Info.plist
       properties:
@@ -39,3 +43,14 @@ targets:
         CODE_SIGN_IDENTITY: "-"
         SWIFT_VERSION: "5.9"
         COMBINE_HIDPI_IMAGES: YES
+
+  ObsidianJotTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: ObsidianJot
+    settings:
+      base:
+        SWIFT_VERSION: "5.9"

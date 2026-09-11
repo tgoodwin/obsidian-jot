@@ -10,7 +10,7 @@ actor CodexAppServerClient: LLMClient {
 
     private var threadID: String?
     private var activeThreadID: String?
-    private var activeResponse = ""
+    private var activeResponse = ChatResponseAccumulator()
     private var completedTurn: Result<String, Error>?
     private var turnContinuation: CheckedContinuation<String, Error>?
 
@@ -22,7 +22,7 @@ actor CodexAppServerClient: LLMClient {
         }
 
         activeThreadID = threadID
-        activeResponse = ""
+        activeResponse.reset()
         completedTurn = nil
 
         _ = try await sendRequest(
@@ -39,7 +39,7 @@ actor CodexAppServerClient: LLMClient {
         guard let threadID else { return }
         self.threadID = nil
         activeThreadID = nil
-        activeResponse = ""
+        activeResponse.reset()
         completedTurn = nil
         turnContinuation?.resume(throwing: CancellationError())
         turnContinuation = nil
@@ -193,22 +193,21 @@ actor CodexAppServerClient: LLMClient {
         case "item/agentMessage/delta":
             guard params["threadId"] as? String == activeThreadID,
                   let delta = params["delta"] as? String else { return }
-            activeResponse += delta
+            activeResponse.append(delta)
 
         case "item/completed":
             guard params["threadId"] as? String == activeThreadID,
-                  activeResponse.isEmpty,
                   let item = params["item"] as? [String: Any],
                   item["type"] as? String == "agentMessage",
                   let text = item["text"] as? String else { return }
-            activeResponse = text
+            activeResponse.useCompletedTextIfEmpty(text)
 
         case "turn/completed":
             guard params["threadId"] as? String == activeThreadID else { return }
             let turn = params["turn"] as? [String: Any]
             let status = turn?["status"] as? String
-            if status == "completed", !activeResponse.isEmpty {
-                finishTurn(.success(activeResponse))
+            if status == "completed", !activeResponse.text.isEmpty {
+                finishTurn(.success(activeResponse.text))
             } else {
                 let error = turn?["error"] as? [String: Any]
                 let message = error?["message"] as? String ?? "Codex did not complete the response."
@@ -222,7 +221,7 @@ actor CodexAppServerClient: LLMClient {
 
     private func finishTurn(_ result: Result<String, Error>) {
         activeThreadID = nil
-        activeResponse = ""
+        activeResponse.reset()
         if let continuation = turnContinuation {
             turnContinuation = nil
             continuation.resume(with: result)

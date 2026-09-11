@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import MarkdownUI
 
 struct JotPanelView: View {
     @EnvironmentObject var appState: AppState
@@ -37,7 +38,14 @@ struct JotPanelView: View {
 
             footer
         }
-        .frame(width: 520, height: preferredHeight)
+        .frame(
+            minWidth: 420,
+            idealWidth: 520,
+            maxWidth: .infinity,
+            minHeight: session.mode == .chat ? 320 : 150,
+            idealHeight: preferredHeight,
+            maxHeight: .infinity
+        )
         .background(VisualEffectBackground())
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
@@ -175,7 +183,8 @@ private struct ChatMessageView: View {
             if message.role == .user { Spacer(minLength: 48) }
 
             VStack(alignment: .leading, spacing: 7) {
-                Text(renderedContent)
+                Markdown(message.content)
+                    .markdownTheme(.gitHub)
                     .font(.system(size: 13))
                     .textSelection(.enabled)
 
@@ -207,10 +216,6 @@ private struct ChatMessageView: View {
 
             if message.role == .assistant { Spacer(minLength: 32) }
         }
-    }
-
-    private var renderedContent: AttributedString {
-        (try? AttributedString(markdown: message.content)) ?? AttributedString(message.content)
     }
 }
 
