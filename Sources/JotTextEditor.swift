@@ -5,6 +5,8 @@ struct JotTextEditor: NSViewRepresentable {
     @Binding var text: String
     let onSubmit: () -> Void
     let onCancel: () -> Void
+    let onToggleMode: () -> Void
+    let onContentHeightChange: (CGFloat) -> Void
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -23,13 +25,15 @@ struct JotTextEditor: NSViewRepresentable {
         textView.allowsUndo = true
         textView.drawsBackground = false
         textView.font = .systemFont(ofSize: 14)
-        textView.textContainerInset = NSSize(width: 6, height: 8)
+        textView.textContainerInset = NSSize(width: 0, height: 8)
         textView.isAutomaticQuoteSubstitutionEnabled = false
         textView.isAutomaticDashSubstitutionEnabled = false
         textView.isAutomaticTextReplacementEnabled = false
         textView.isAutomaticSpellingCorrectionEnabled = false
         textView.onSubmit = onSubmit
         textView.onCancel = onCancel
+        textView.onToggleMode = onToggleMode
+        textView.onContentHeightChange = onContentHeightChange
 
         textView.translatesAutoresizingMaskIntoConstraints = true
         textView.autoresizingMask = [.width]
@@ -50,8 +54,11 @@ struct JotTextEditor: NSViewRepresentable {
         }
         textView.onSubmit = onSubmit
         textView.onCancel = onCancel
+        textView.onToggleMode = onToggleMode
+        textView.onContentHeightChange = onContentHeightChange
 
         DispatchQueue.main.async {
+            textView.reportContentHeight()
             if textView.window?.firstResponder !== textView {
                 textView.window?.makeFirstResponder(textView)
             }
@@ -67,8 +74,9 @@ struct JotTextEditor: NSViewRepresentable {
         }
 
         func textDidChange(_ notification: Notification) {
-            guard let textView = notification.object as? NSTextView else { return }
+            guard let textView = notification.object as? SubmittingTextView else { return }
             parent.text = textView.string
+            textView.reportContentHeight()
         }
     }
 }
@@ -76,8 +84,33 @@ struct JotTextEditor: NSViewRepresentable {
 final class SubmittingTextView: NSTextView {
     var onSubmit: (() -> Void)?
     var onCancel: (() -> Void)?
+    var onToggleMode: (() -> Void)?
+    var onContentHeightChange: ((CGFloat) -> Void)?
+
+    override func setFrameSize(_ newSize: NSSize) {
+        let widthChanged = abs(frame.width - newSize.width) > 0.5
+        super.setFrameSize(newSize)
+        if widthChanged {
+            DispatchQueue.main.async { [weak self] in
+                self?.reportContentHeight()
+            }
+        }
+    }
+
+    func reportContentHeight() {
+        guard let layoutManager, let textContainer else { return }
+        layoutManager.ensureLayout(for: textContainer)
+        let textHeight = layoutManager.usedRect(for: textContainer).height
+        let height = ceil(textHeight + textContainerInset.height * 2)
+        onContentHeightChange?(height)
+    }
 
     override func keyDown(with event: NSEvent) {
+        // Tab toggles between jot and chat modes.
+        if event.keyCode == 48 {
+            onToggleMode?()
+            return
+        }
         // Return / Enter without Shift → submit. Shift+Return inserts a newline.
         if event.keyCode == 36 || event.keyCode == 76 {
             if !event.modifierFlags.contains(.shift) {

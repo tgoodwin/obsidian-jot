@@ -5,14 +5,21 @@ import SwiftUI
 final class JotPanelController: NSObject, NSWindowDelegate {
     private var panel: NSPanel?
     private let appState: AppState
+    private let session: PanelSession
 
     init(appState: AppState) {
         self.appState = appState
+        self.session = PanelSession()
+    }
+
+    init(appState: AppState, session: PanelSession) {
+        self.appState = appState
+        self.session = session
     }
 
     func toggle() {
         if let panel, panel.isVisible {
-            close()
+            dismiss()
         } else {
             present()
         }
@@ -29,18 +36,32 @@ final class JotPanelController: NSObject, NSWindowDelegate {
         panel.makeKeyAndOrderFront(nil)
     }
 
-    func close() {
+    func dismiss() {
         panel?.orderOut(nil)
     }
 
+    func discardAndDismiss() {
+        panel?.orderOut(nil)
+        session.reset()
+    }
+
     func windowDidResignKey(_ notification: Notification) {
-        // Auto-dismiss when focus is lost — Day-One-style.
-        close()
+        // Losing focus hides the panel without discarding the current session.
+        dismiss()
     }
 
     private func makePanel() -> NSPanel {
-        let contentView = JotPanelView(onClose: { [weak self] in self?.close() })
-            .environmentObject(appState)
+        let contentView = JotPanelView(
+            session: session,
+            onDismiss: { [weak self] in self?.dismiss() },
+            onDiscard: { [weak self] in self?.discardAndDismiss() },
+            onPreferredHeightChange: { [weak self] height in
+                DispatchQueue.main.async {
+                    self?.resizePanel(to: height)
+                }
+            }
+        )
+        .environmentObject(appState)
 
         let hosting = NSHostingController(rootView: contentView)
         let size = hosting.view.fittingSize == .zero
@@ -49,7 +70,7 @@ final class JotPanelController: NSObject, NSWindowDelegate {
 
         let panel = FloatingPanel(
             contentRect: NSRect(origin: .zero, size: size),
-            styleMask: [.nonactivatingPanel, .titled, .fullSizeContentView],
+            styleMask: [.nonactivatingPanel, .titled, .fullSizeContentView, .resizable],
             backing: .buffered,
             defer: false
         )
@@ -62,12 +83,21 @@ final class JotPanelController: NSObject, NSWindowDelegate {
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = true
+        panel.minSize = NSSize(width: 420, height: 150)
+        panel.maxSize = NSSize(width: 1_000, height: 900)
         panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient]
         panel.hidesOnDeactivate = false
         panel.contentViewController = hosting
         panel.delegate = self
         return panel
+    }
+
+    private func resizePanel(to height: CGFloat) {
+        guard let panel, abs(panel.contentLayoutRect.height - height) > 1 else { return }
+        let top = panel.frame.maxY
+        panel.setContentSize(NSSize(width: panel.contentLayoutRect.width, height: height))
+        panel.setFrameOrigin(NSPoint(x: panel.frame.minX, y: top - panel.frame.height))
     }
 
     private func centerOnActiveScreen(_ panel: NSPanel) {

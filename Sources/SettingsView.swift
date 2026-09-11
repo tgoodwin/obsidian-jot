@@ -5,6 +5,8 @@ import KeyboardShortcuts
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var loginItem = LoginItem()
+    @State private var apiKey = ""
+    @State private var apiKeyStatus: String?
 
     var body: some View {
         Form {
@@ -51,6 +53,45 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Quick Chat") {
+                Picker("Backend", selection: $appState.llmProvider) {
+                    Text("Codex subscription").tag("codexCLI")
+                    Text("OpenAI-compatible API").tag("openAICompatible")
+                }
+                .pickerStyle(.segmented)
+
+                if appState.llmProvider == "codexCLI" {
+                    TextField("Codex executable", text: $appState.codexExecutablePath)
+                        .textFieldStyle(.roundedBorder)
+                    TextField("Model override (optional)", text: $appState.codexModel)
+                        .textFieldStyle(.roundedBorder)
+                    Text("Uses one persistent codex app-server process and your saved ChatGPT login. Run ‘codex login’ in Terminal if authentication is required.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    TextField("Base URL", text: $appState.llmBaseURL)
+                        .textFieldStyle(.roundedBorder)
+                    TextField("Model", text: $appState.llmModel)
+                        .textFieldStyle(.roundedBorder)
+                    HStack {
+                        SecureField("API key (optional for local servers)", text: $apiKey)
+                            .textFieldStyle(.roundedBorder)
+                        Button("Save Key", action: saveAPIKey)
+                    }
+                    if let apiKeyStatus {
+                        Text(apiKeyStatus)
+                            .font(.caption)
+                            .foregroundStyle(apiKeyStatus == "Saved in Keychain." ? Color.secondary : Color.red)
+                    }
+                    Text("Uses an OpenAI-compatible /chat/completions endpoint.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Text("Press Tab in the jot panel to switch between jot and chat modes.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Section("Hotkey") {
                 KeyboardShortcuts.Recorder("Toggle jot panel:", name: .toggleJotPanel)
             }
@@ -70,10 +111,22 @@ struct SettingsView: View {
                 }
             }
         }
-        .onAppear { loginItem.refresh() }
+        .onAppear {
+            loginItem.refresh()
+            apiKey = KeychainStore.readAPIKey()
+        }
         .formStyle(.grouped)
         .padding(20)
-        .frame(width: 480, height: 460)
+        .frame(width: 480, height: 610)
+    }
+
+    private func saveAPIKey() {
+        do {
+            try KeychainStore.saveAPIKey(apiKey.trimmingCharacters(in: .whitespacesAndNewlines))
+            apiKeyStatus = "Saved in Keychain."
+        } catch {
+            apiKeyStatus = error.localizedDescription
+        }
     }
 
     private func pickVault() {

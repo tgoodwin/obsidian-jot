@@ -1,6 +1,6 @@
 # Obsidian Jot
 
-Menu-bar app for macOS. Press a global hotkey (default ⌃⇧J), type something, hit Enter — it gets appended to today's Obsidian daily note.
+Menu-bar app for macOS. Press a global hotkey (default ⌃⇧J), type something, hit Enter — it gets appended to today's Obsidian daily note. Press Tab to turn the same panel into a lightweight LLM conversation.
 
 ## Build
 
@@ -11,6 +11,14 @@ open ObsidianJot.xcodeproj
 ```
 
 Then ⌘R in Xcode. On first launch the Settings window opens — pick your vault folder.
+
+## Quick Chat
+
+Quick Chat uses your local Codex installation and saved ChatGPT login by default. It keeps one `codex app-server` process alive, so later questions avoid CLI startup cost. Run `codex login` in Terminal once if needed. An OpenAI-compatible HTTP backend is also available in Settings; its API key is stored in macOS Keychain.
+
+Open the jot panel and press Tab to switch its compact input into chat mode. The input starts at one line and grows with longer prompts. After the first message is sent, the panel expands to show it and the model's progress; press Tab again to switch back. Responses render GitHub-flavored Markdown, including headings, links, lists, blockquotes, syntax-highlighted fenced code, and tables. Assistant responses can also be copied or appended to today's note.
+
+The global hotkey and focus loss hide the panel while preserving its contents. Press Escape to dismiss the panel and clear the current jot or chat session.
 
 ## Dev loop
 
@@ -26,7 +34,11 @@ The hotkey, `NSPanel` activation behavior, and `MenuBarExtra` only exist in a re
 
 - `Sources/ObsidianJotApp.swift` — `@main`, `MenuBarExtra`, `Settings` scene, `AppDelegate` wires the global hotkey.
 - `Sources/JotPanelController.swift` — manages the floating `NSPanel` (Day-One-style).
-- `Sources/JotPanelView.swift` — SwiftUI content of the panel.
+- `Sources/JotPanelView.swift` — SwiftUI content for jot and chat modes.
+- `Sources/PanelSession.swift` — panel mode, ephemeral conversation state, and submission behavior.
+- `Sources/CodexAppServerClient.swift` — persistent Codex app-server connection and ephemeral chat threads.
+- `Sources/LLMClient.swift` — shared client contract, Codex exec fallback, and OpenAI-compatible client.
+- `Sources/KeychainStore.swift` — API-key storage in macOS Keychain.
 - `Sources/JotTextEditor.swift` — `NSTextView` wrapper that maps Enter→submit, Shift+Enter→newline, Esc→dismiss.
 - `Sources/SettingsView.swift` — vault picker + `KeyboardShortcuts.Recorder`.
 - `Sources/AppState.swift` — `@AppStorage`-backed settings, computes today's daily-note URL.

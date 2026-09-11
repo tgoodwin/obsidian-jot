@@ -9,6 +9,11 @@ final class AppState: ObservableObject {
     @AppStorage("dailyNoteTemplate") var dailyNoteTemplate: String = ""
     @AppStorage("jotsHeading") var jotsHeading: String = "Jots"
     @AppStorage("jotsHeadingLevel") var jotsHeadingLevel: Int = 2
+    @AppStorage("llmProvider") var llmProvider: String = "codexCLI"
+    @AppStorage("llmBaseURL") var llmBaseURL: String = "https://api.openai.com/v1"
+    @AppStorage("llmModel") var llmModel: String = "gpt-4.1-mini"
+    @AppStorage("codexExecutablePath") var codexExecutablePath: String = "/opt/homebrew/bin/codex"
+    @AppStorage("codexModel") var codexModel: String = ""
 
     var isConfigured: Bool {
         !vaultPath.isEmpty && FileManager.default.fileExists(atPath: vaultPath)
