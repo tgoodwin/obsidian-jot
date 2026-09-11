@@ -5,6 +5,7 @@ import MarkdownUI
 struct JotPanelView: View {
     @EnvironmentObject var appState: AppState
     @ObservedObject var session: PanelSession
+    @State private var measuredInputHeight: CGFloat = 34
 
     let onDismiss: () -> Void
     let onDiscard: () -> Void
@@ -14,7 +15,7 @@ struct JotPanelView: View {
         VStack(spacing: 0) {
             header
 
-            if session.mode == .chat, hasChatResponse {
+            if session.mode == .chat, hasChatActivity {
                 chatTranscript
                 Divider().opacity(0.5)
             }
@@ -23,11 +24,12 @@ struct JotPanelView: View {
                 text: $session.input,
                 onSubmit: submit,
                 onCancel: onDiscard,
-                onToggleMode: session.toggleMode
+                onToggleMode: session.toggleMode,
+                onContentHeightChange: updateInputHeight
             )
             .frame(
-                minHeight: session.mode == .chat ? 72 : 100,
-                maxHeight: session.mode == .chat ? 100 : .infinity
+                minHeight: session.mode == .chat ? chatInputHeight : 100,
+                maxHeight: session.mode == .chat ? chatInputHeight : .infinity
             )
             .padding(.horizontal, 10)
 
@@ -60,8 +62,13 @@ struct JotPanelView: View {
         .onChange(of: session.mode) { _, _ in
             onPreferredHeightChange(preferredHeight)
         }
-        .onChange(of: hasChatResponse) { _, _ in
+        .onChange(of: hasChatActivity) { _, _ in
             onPreferredHeightChange(preferredHeight)
+        }
+        .onChange(of: measuredInputHeight) { _, _ in
+            if session.mode == .chat, !hasChatActivity {
+                onPreferredHeightChange(preferredHeight)
+            }
         }
     }
 
@@ -74,10 +81,6 @@ struct JotPanelView: View {
                 .foregroundStyle(.secondary)
             Spacer()
             if session.mode == .chat {
-                if session.isSending {
-                    ProgressView()
-                        .controlSize(.mini)
-                }
                 Text(chatModelLabel)
                     .font(.system(size: 10))
                     .foregroundStyle(.tertiary)
@@ -93,20 +96,6 @@ struct JotPanelView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 10) {
-                    if session.messages.isEmpty {
-                        VStack(spacing: 6) {
-                            Image(systemName: "bubble.left.and.bubble.right")
-                                .font(.system(size: 22))
-                            Text("Ask a quick question")
-                                .font(.system(size: 13, weight: .medium))
-                            Text("This conversation is cleared when the panel closes.")
-                                .font(.system(size: 11))
-                        }
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 60)
-                    }
-
                     ForEach(session.messages) { message in
                         ChatMessageView(
                             message: message,
@@ -124,21 +113,18 @@ struct JotPanelView: View {
                                 .foregroundStyle(.secondary)
                             Spacer()
                         }
-                        .id("thinking")
                     }
+
+                    Color.clear
+                        .frame(height: 1)
+                        .id("chat-bottom")
                 }
                 .padding(12)
             }
-            .onChange(of: session.messages.count) { _, _ in
-                if let lastID = session.messages.last?.id {
-                    withAnimation { proxy.scrollTo(lastID, anchor: .bottom) }
-                }
-            }
-            .onChange(of: session.isSending) { _, sending in
-                if sending {
-                    withAnimation { proxy.scrollTo("thinking", anchor: .bottom) }
-                }
-            }
+            .defaultScrollAnchor(.bottom)
+            .onAppear { scrollToBottom(proxy) }
+            .onChange(of: session.messages.count) { _, _ in scrollToBottom(proxy) }
+            .onChange(of: session.isSending) { _, _ in scrollToBottom(proxy) }
         }
         .frame(maxHeight: .infinity)
     }
@@ -155,11 +141,16 @@ struct JotPanelView: View {
     }
 
     private var preferredHeight: CGFloat {
-        session.mode == .chat && hasChatResponse ? 500 : 180
+        guard session.mode == .chat else { return 180 }
+        return hasChatActivity ? 500 : 180 + max(0, chatInputHeight - 34)
     }
 
-    private var hasChatResponse: Bool {
-        session.messages.contains { $0.role == .assistant }
+    private var hasChatActivity: Bool {
+        !session.messages.isEmpty
+    }
+
+    private var chatInputHeight: CGFloat {
+        min(max(measuredInputHeight, 34), 140)
     }
 
     private var chatModelLabel: String {
@@ -181,6 +172,19 @@ struct JotPanelView: View {
         session.mode == .chat
             ? "⏎ to send · ⇧⏎ for newline · tab to jot · esc to dismiss"
             : "⏎ to save · ⇧⏎ for newline · tab to chat · esc to dismiss"
+    }
+
+    private func updateInputHeight(_ height: CGFloat) {
+        let clamped = min(max(height, 34), 140)
+        if abs(measuredInputHeight - clamped) > 0.5 {
+            measuredInputHeight = clamped
+        }
+    }
+
+    private func scrollToBottom(_ proxy: ScrollViewProxy) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            proxy.scrollTo("chat-bottom", anchor: .bottom)
+        }
     }
 
     private func submit() {
