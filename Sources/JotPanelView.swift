@@ -13,8 +13,6 @@ struct JotPanelView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            header
-
             if session.mode == .chat, hasChatActivity {
                 chatTranscript
                 Divider().opacity(0.5)
@@ -22,6 +20,7 @@ struct JotPanelView: View {
 
             JotTextEditor(
                 text: $session.input,
+                placeholder: inputPlaceholder,
                 onSubmit: submit,
                 onCancel: onDiscard,
                 onToggleMode: session.toggleMode,
@@ -48,7 +47,7 @@ struct JotPanelView: View {
             minWidth: 420,
             idealWidth: 520,
             maxWidth: .infinity,
-            minHeight: 150,
+            minHeight: session.mode == .chat ? 100 : 150,
             idealHeight: preferredHeight,
             maxHeight: .infinity
         )
@@ -70,26 +69,6 @@ struct JotPanelView: View {
                 onPreferredHeightChange(preferredHeight)
             }
         }
-    }
-
-    private var header: some View {
-        HStack {
-            Image(systemName: session.mode == .chat ? "bubble.left" : "square.and.pencil")
-                .foregroundStyle(.secondary)
-            Text(headerText)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.secondary)
-            Spacer()
-            if session.mode == .chat {
-                Text(chatModelLabel)
-                    .font(.system(size: 10))
-                    .foregroundStyle(.tertiary)
-                    .lineLimit(1)
-            }
-        }
-        .padding(.horizontal, 14)
-        .padding(.top, 12)
-        .padding(.bottom, 6)
     }
 
     private var chatTranscript: some View {
@@ -142,7 +121,7 @@ struct JotPanelView: View {
 
     private var preferredHeight: CGFloat {
         guard session.mode == .chat else { return 180 }
-        return hasChatActivity ? 500 : 180 + max(0, chatInputHeight - 34)
+        return hasChatActivity ? 500 : 100 + max(0, chatInputHeight - 34)
     }
 
     private var hasChatActivity: Bool {
@@ -153,16 +132,9 @@ struct JotPanelView: View {
         min(max(measuredInputHeight, 34), 140)
     }
 
-    private var chatModelLabel: String {
-        if appState.llmProvider == "codexCLI" {
-            return appState.codexModel.isEmpty ? "Codex" : appState.codexModel
-        }
-        return appState.llmModel
-    }
-
-    private var headerText: String {
+    private var inputPlaceholder: String {
         if session.mode == .chat {
-            return "Quick Chat"
+            return "Quick chat"
         }
         guard let url = appState.dailyNoteURL else { return "Obsidian Jot" }
         return "Append to \(url.lastPathComponent)"

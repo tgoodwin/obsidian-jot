@@ -83,7 +83,7 @@ final class JotPanelController: NSObject, NSWindowDelegate {
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = true
-        panel.minSize = NSSize(width: 420, height: 150)
+        panel.minSize = NSSize(width: 420, height: 100)
         panel.maxSize = NSSize(width: 1_000, height: 900)
         panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient]
