@@ -24,7 +24,10 @@ struct JotPanelView: View {
                 onCancel: onClose,
                 onToggleMode: session.toggleMode
             )
-            .frame(minHeight: session.mode == .chat ? 72 : 100, maxHeight: session.mode == .chat ? 100 : 220)
+            .frame(
+                minHeight: session.mode == .chat ? 72 : 100,
+                maxHeight: session.mode == .chat ? 100 : .infinity
+            )
             .padding(.horizontal, 10)
 
             if let errorMessage = session.errorMessage {
@@ -184,7 +187,7 @@ private struct ChatMessageView: View {
 
             VStack(alignment: .leading, spacing: 7) {
                 Markdown(message.content)
-                    .markdownTheme(.gitHub)
+                    .markdownTheme(.jot)
                     .font(.system(size: 13))
                     .textSelection(.enabled)
 
@@ -217,6 +220,36 @@ private struct ChatMessageView: View {
             if message.role == .assistant { Spacer(minLength: 32) }
         }
     }
+}
+
+private extension Theme {
+    static let jot = Theme.basic
+        .text {
+            ForegroundColor(.primary)
+            BackgroundColor(nil)
+            FontSize(13)
+        }
+        .code {
+            FontFamilyVariant(.monospaced)
+            FontSize(.em(0.9))
+            BackgroundColor(Color.primary.opacity(0.08))
+        }
+        .codeBlock { configuration in
+            ScrollView(.horizontal) {
+                configuration.label
+                    .fixedSize(horizontal: false, vertical: true)
+                    .relativeLineSpacing(.em(0.15))
+                    .markdownTextStyle {
+                        FontFamilyVariant(.monospaced)
+                        FontSize(.em(0.9))
+                        BackgroundColor(nil)
+                    }
+                    .padding(12)
+            }
+            .background(Color.primary.opacity(0.07))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .markdownMargin(top: 0, bottom: 12)
+        }
 }
 
 private struct VisualEffectBackground: NSViewRepresentable {
