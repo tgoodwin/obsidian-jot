@@ -13,7 +13,7 @@ struct JotTextEditor: NSViewRepresentable {
     }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSScrollView()
+        let scrollView = ReportingScrollView()
         scrollView.drawsBackground = false
         scrollView.hasVerticalScroller = true
         scrollView.autohidesScrollers = true
@@ -43,6 +43,9 @@ struct JotTextEditor: NSViewRepresentable {
         textView.textContainer?.widthTracksTextView = true
 
         scrollView.documentView = textView
+        scrollView.onSizeChange = { [weak textView] in
+            textView?.reportContentHeight()
+        }
         context.coordinator.textView = textView
         return scrollView
     }
@@ -81,6 +84,21 @@ struct JotTextEditor: NSViewRepresentable {
     }
 }
 
+private final class ReportingScrollView: NSScrollView {
+    var onSizeChange: (() -> Void)?
+
+    override func setFrameSize(_ newSize: NSSize) {
+        let sizeChanged = abs(frame.width - newSize.width) > 0.5
+            || abs(frame.height - newSize.height) > 0.5
+        super.setFrameSize(newSize)
+        if sizeChanged {
+            DispatchQueue.main.async { [weak self] in
+                self?.onSizeChange?()
+            }
+        }
+    }
+}
+
 final class SubmittingTextView: NSTextView {
     var onSubmit: (() -> Void)?
     var onCancel: (() -> Void)?
@@ -101,8 +119,15 @@ final class SubmittingTextView: NSTextView {
         guard let layoutManager, let textContainer else { return }
         layoutManager.ensureLayout(for: textContainer)
         let textHeight = layoutManager.usedRect(for: textContainer).height
-        let height = ceil(textHeight + textContainerInset.height * 2)
-        onContentHeightChange?(height)
+        let contentHeight = ceil(textHeight + textContainerInset.height * 2)
+        let viewportSize = enclosingScrollView?.contentSize ?? .zero
+        let documentHeight = max(contentHeight, viewportSize.height)
+        let documentWidth = max(viewportSize.width, 1)
+
+        if abs(frame.width - documentWidth) > 0.5 || abs(frame.height - documentHeight) > 0.5 {
+            setFrameSize(NSSize(width: documentWidth, height: documentHeight))
+        }
+        onContentHeightChange?(contentHeight)
     }
 
     override func keyDown(with event: NSEvent) {

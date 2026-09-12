@@ -4,6 +4,8 @@ import SwiftUI
 @MainActor
 final class JotPanelController: NSObject, NSWindowDelegate {
     private var panel: NSPanel?
+    private var isLiveResizing = false
+    private var hasUserResized = false
     private let appState: AppState
     private let session: PanelSession
 
@@ -42,7 +44,17 @@ final class JotPanelController: NSObject, NSWindowDelegate {
 
     func discardAndDismiss() {
         panel?.orderOut(nil)
+        hasUserResized = false
         session.reset()
+    }
+
+    func windowWillStartLiveResize(_ notification: Notification) {
+        isLiveResizing = true
+    }
+
+    func windowDidEndLiveResize(_ notification: Notification) {
+        isLiveResizing = false
+        hasUserResized = true
     }
 
     func windowDidResignKey(_ notification: Notification) {
@@ -94,6 +106,7 @@ final class JotPanelController: NSObject, NSWindowDelegate {
     }
 
     private func resizePanel(to height: CGFloat) {
+        guard !isLiveResizing, !hasUserResized else { return }
         guard let panel, abs(panel.contentLayoutRect.height - height) > 1 else { return }
         let top = panel.frame.maxY
         panel.setContentSize(NSSize(width: panel.contentLayoutRect.width, height: height))

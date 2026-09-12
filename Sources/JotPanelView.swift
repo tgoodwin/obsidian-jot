@@ -99,7 +99,7 @@ struct JotPanelView: View {
     private var chatTranscript: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(spacing: 10) {
+                VStack(spacing: 10) {
                     ForEach(session.messages) { message in
                         ChatMessageView(
                             message: message,
@@ -124,11 +124,33 @@ struct JotPanelView: View {
                         .id("chat-bottom")
                 }
                 .padding(12)
+                .background {
+                    GeometryReader { geometry in
+                        Color.clear.preference(
+                            key: TranscriptContentSizeKey.self,
+                            value: geometry.size
+                        )
+                    }
+                }
+            }
+            .background {
+                GeometryReader { geometry in
+                    Color.clear.preference(
+                        key: TranscriptViewportSizeKey.self,
+                        value: geometry.size
+                    )
+                }
             }
             .defaultScrollAnchor(.bottom)
             .onAppear { scrollToBottom(proxy) }
             .onChange(of: session.messages.count) { _, _ in scrollToBottom(proxy) }
             .onChange(of: session.isSending) { _, _ in scrollToBottom(proxy) }
+            .onPreferenceChange(TranscriptContentSizeKey.self) { size in
+                if size != .zero { scrollToBottom(proxy) }
+            }
+            .onPreferenceChange(TranscriptViewportSizeKey.self) { size in
+                if size != .zero { scrollToBottom(proxy) }
+            }
         }
         .frame(maxHeight: .infinity)
     }
@@ -188,13 +210,29 @@ struct JotPanelView: View {
     }
 
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        DispatchQueue.main.async {
             proxy.scrollTo("chat-bottom", anchor: .bottom)
         }
     }
 
     private func submit() {
         session.submit(appState: appState, onJotSaved: onDismiss)
+    }
+}
+
+private struct TranscriptContentSizeKey: PreferenceKey {
+    static var defaultValue: CGSize = .zero
+
+    static func reduce(value: inout CGSize, nextValue: () -> CGSize) {
+        value = nextValue()
+    }
+}
+
+private struct TranscriptViewportSizeKey: PreferenceKey {
+    static var defaultValue: CGSize = .zero
+
+    static func reduce(value: inout CGSize, nextValue: () -> CGSize) {
+        value = nextValue()
     }
 }
 
